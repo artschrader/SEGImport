@@ -1,0 +1,34 @@
+#!/usr/bin/env node
+var debug = require('debug')('SEGImport');
+var app = require('../app');
+var WSCreate = require('../lib/WSCreate');
+var WSSave = require('../lib/WSSave');
+
+app.set('port', process.env.PORT || 3000);
+
+var server = app.listen(app.get('port'), function() {
+  debug('Express server li-stening on port ' + server.address().port);
+});
+var io = require('socket.io').listen(server);
+if (!app.settings.socketIO){
+  app.set('socketIO',io);
+}
+
+io.on('connection',function(socket){
+  console.log('Connection');
+  socket.on('newItem', function(data){
+    WSCreate(data.ItemNo, data.EntityName, function(newData){
+    console.log('Working on Item : ',data.ItemNo);
+      socket.emit('Item : Working',data.ItemNo);
+      WSSave(data.ItemNo,newData.entityName,newData.eObject,data.Object, function(newData2){
+        socket.emit('Item : Done',newData2.itemNo);
+      });
+    });
+    //console.log('Entity Name : ',data['EntityName']);
+    //console.log('ItemNo : ',data['ItemNo']);
+    //console.log('Object : ',data['Object']);
+  });
+  socket.on('Item : Created', function(data){
+    console.log('Item was created ',data);
+  });
+});

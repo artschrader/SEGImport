@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<script type="text/javascript" src="http://shopas.seg.org/js/jquery.js"></script>
+<script type="text/javascript" src="http://shopas.seg.org/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io();
+</script>
+  <head>
+    <title><%= title %></title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <p>Welcome to <%= title %></p>
+    <div id="drop">Drop an XLSX file here to see sheet data.</div>
+      <pre id="out">Entity Name:&nbsp;</pre>
+      <br />
+      <div id="Output">
+          <TABLE ID="OutputTable"></TABLE>
+      </div>
+	<input id="txtStatus" name="txtStatus"  type="text" /><br />
+    <input id="btnCreate" name="bntCreate" type="button" value="Create Entities" onclick="doCreate();"/><br />
+      <script type="text/javascript" src="http://shopas.seg.org/js/xlsx/dist/xlsx.full.min.js"></script>
+      <script type="text/javascript">
+          var activeLine = 1;
+	       var myEntities = new Array();
+	       var sheet;
+	       var entity;
+	       var tableRows;
+            function to_json(workbook) {
+                var result = {};
+                workbook.SheetNames.forEach(function(sheetName) {
+                    var roa = XLSX.utils.sheet_to_row_object_array(workbook.Sheets[sheetName]);
+                    if(roa.length > 0){
+                        result[sheetName] = roa;
+                    }
+                });
+                return result;
+            }
+
+          socket.on('Item : Working', function(iNo){
+              document.getElementById("txtStatus").innerHTML = "Working";
+              var workingRow = parseInt(iNo) + 1;
+              document.getElementById("OutputTable").rows[workingRow].cells[document.getElementById("OutputTable").rows[1].cells.length - 1].innerHTML = "Working";
+          });
+          socket.on('Item : Done', function(iNo){
+              var workingRow = parseInt(iNo) + 1;
+              document.getElementById("OutputTable").rows[workingRow].cells[document.getElementById("OutputTable").rows[1].cells.length - 1].innerHTML = "Created";
+          });
+          function process_wb(wb) {
+                var result = '<TR>';
+                var firstTime = 1;
+                var myObject = to_json(wb);
+                for (sheet in myObject) {
+                    var theSheet = myObject[sheet]
+                    for (row in theSheet) {
+                        var thisRow = theSheet[row];
+                        myEntities.push(thisRow);
+                        if (Boolean(firstTime)) {
+                            for (key in thisRow) {
+                                if (key == '__rowNum__') {
+                                    result +=  '<TH>' + 'status' + '</TH>';
+                                }
+                                else {
+                                    result +=  '<TH>' + key + '</TH>';
+                                }
+                            }
+                            result += '</TR>';
+                            firstTime = 0;
+                        }
+                        result += '<TR>';
+                        for (key in thisRow) {
+                                result += '<TD>'+thisRow[key]+'</TD>';
+                        }
+                        result += '</TR>';
+                    }
+                }
+                tableRows = document.getElementById("OutputTable").getElementsByTagName("tr");
+                return result;
+            }
+          function fixdata(data) {
+                var o = "", l = 0, w = 10240;
+                for(; l<data.byteLength/w; ++l) o+=String.fromCharCode.apply(null,new Uint8Array(data.slice(l*w,l*w+w)));
+                o+=String.fromCharCode.apply(null, new Uint8Array(data.slice(o.length)));
+                return o;
+            }
+      	var drop = document.getElementById('drop');
+        function handleDrop(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            socket.emit('SomethingDropped', 'Something-Dropped');
+            var files = e.dataTransfer.files;
+            var i,f;
+            for (i = 0, f = files[i]; i != files.length; ++i) {
+                var reader = new FileReader();
+                var name = f.name;
+                reader.onload = function(e) {
+                    var data = e.target.result;
+                    var wb;
+                    var arr = fixdata(data);
+                    wb = XLSX.read(btoa(arr), {type: 'base64'});
+                    document.getElementById("OutputTable").innerHTML = process_wb(wb);
+                    document.getElementById("out").innerHTML += sheet;
+                };
+                reader.readAsArrayBuffer(f);
+
+            }
+        }
+
+        function handleDragover(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+        }
+
+        if(drop.addEventListener) {
+            drop.addEventListener('dragenter', handleDragover, false);
+            drop.addEventListener('dragover', handleDragover, false);
+            drop.addEventListener('drop', handleDrop, false);
+        }
+          function doCreate() {
+              for (var itemNo in myEntities) {
+                  var thisObject = myEntities[itemNo];
+                  callWebService(sheet,itemNo,thisObject);
+              }
+          }
+          function callWebService(entityName,iNo,myObject){
+              socket.emit('newItem', {'EntityName' : entityName, 'ItemNo' : iNo, 'Object' : myObject});
+          }
+
+//          function callWebService(myObject) {
+//              var jqxhr = $.ajax({
+//                url: "/postData?EntityName="+sheet,
+////				async: false,
+//                beforeSend: function (xhr) {
+//                    xhr.setRequestHeader("Content-Type", "application/json");
+//                },
+//                type: 'post',
+//                data: (JSON.stringify(myObject)),
+//                  success: function(successText) {
+//                    status.value = successText;
+//                  },
+//                error: function (xhr, ajaxOptions, thrownError) {
+//                    status.value = 'Error:'+xhr.status;
+//                    alert(xhr.status);
+//                    alert(thrownError);
+//                }
+//            });
+//
+//          }
+      </script>
+  </body>
+</html>

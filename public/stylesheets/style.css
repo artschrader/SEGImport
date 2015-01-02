@@ -1,0 +1,32 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+#drop{
+	border:2px dashed #bbb;
+	-moz-border-radius:5px;
+	-webkit-border-radius:5px;
+	border-radius:5px;
+	padding:25px;
+	text-align:center;
+	font:20pt bold,"Vollkorn";color:#bbb
+}
+#Output{
+	border:2px solid black;
+	padding:5px;
+	height:300px;
+	overflow: scroll;
+}
+#OutputTable table, th, td {
+	border:1px solid grey;
+}
+#out {
+	font:18pt bold;
+}
+#txtStatus {
+	width:653px;
+}
