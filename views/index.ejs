@@ -26,6 +26,7 @@
     <script>
         $("#server").selectmenu({
             change: function(event, data) {
+                resetForm();
                 socket.emit("server : Changed", data.item.value);
             }
         });
@@ -36,12 +37,13 @@
       <div id="Output">
           <TABLE ID="OutputTable"></TABLE>
       </div>
-	<input id="txtStatus" name="txtStatus"  type="text" /><br />
+	<div id="txtStatus"></div><br />
     <input id="btnCreate" name="bntCreate" type="button" value="Create Entities" onclick="doCreate();"/><br />
+    <input id="btnReset" name="bntReset" type="button" value="Reset Form" onclick="resetForm();"/><br />
       <script type="text/javascript" src="/javascripts/xlsx.full.min.js"></script>
       <script type="text/javascript">
           var activeLine = 1;
-	       var myEntities = new Array();
+	       var myEntities = [];
 	       var sheet;
 	       var entity;
 	       var tableRows;
@@ -70,7 +72,7 @@
                 var firstTime = 1;
                 var myObject = to_json(wb);
                 for (sheet in myObject) {
-                    var theSheet = myObject[sheet]
+                    var theSheet = myObject[sheet];
                     for (row in theSheet) {
                         var thisRow = theSheet[row];
                         myEntities.push(thisRow);
@@ -142,30 +144,16 @@
                   callWebService(sheet,itemNo,thisObject);
               }
           }
+          function   resetForm() {
+              myEntities = [];
+              document.getElementById("OutputTable").innerHTML = "";
+              document.getElementById("out").innerHTML = "Entity Name:&nbsp;";
+          }
+
           function callWebService(entityName,iNo,myObject){
               socket.emit('newItem', {'EntityName' : entityName, 'ItemNo' : iNo, 'Object' : myObject});
           }
 
-//          function callWebService(myObject) {
-//              var jqxhr = $.ajax({
-//                url: "/postData?EntityName="+sheet,
-////				async: false,
-//                beforeSend: function (xhr) {
-//                    xhr.setRequestHeader("Content-Type", "application/json");
-//                },
-//                type: 'post',
-//                data: (JSON.stringify(myObject)),
-//                  success: function(successText) {
-//                    status.value = successText;
-//                  },
-//                error: function (xhr, ajaxOptions, thrownError) {
-//                    status.value = 'Error:'+xhr.status;
-//                    alert(xhr.status);
-//                    alert(thrownError);
-//                }
-//            });
-//
-//          }
       </script>
   </body>
 </html>
