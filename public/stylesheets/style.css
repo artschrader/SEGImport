@@ -30,3 +30,5 @@ a {
 #txtStatus {
 	width:653px;
 }
+label {display: block;}
+select {width: 200px;}

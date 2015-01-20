@@ -5,6 +5,19 @@ var WSCreate = require('../lib/WSCreate');
 var WSSave = require('../lib/WSSave');
 
 app.set('port', process.env.PORT || 3000);
+app.set('server', 'localhost');
+var WSHostName = 'localhost';
+var WSPathName = '/PersonifyDataServicesPAS/PersonifyData.svc';
+var serverList=
+    [
+      {"label" : "localhost", "WSHostName" : "localhost", "WSPathName" : "/PersonifyDataServicesPAS/PersonifyData.svc"},
+      {"label" : "psupp", "WSHostName" : "amsbizstage.seg.org", "WSPathName" : "/PersonifyDataServicesPSUPP/PersonifyData.svc"},
+      {"label" : "pdev1", "WSHostName" : "amsbizdev.seg.org", "WSPathName" : "/PersonifyDataServices/PersonifyData.svc"},
+      {"label" : "pdev2", "WSHostName" : "amsbizdev.seg.org", "WSPathName" : "/PersonifyDataServices2/PersonifyData.svc"},
+      {"label" : "pdev3", "WSHostName" : "amsbizdev.seg.org", "WSPathName" : "/PersonifyDataServices3/PersonifyData.svc"},
+      {"label" : "ptst", "WSHostName" : "amsbizstage.seg.org", "WSPathName" : "/PersonifyDataServicesPtst/PersonifyData.svc"},
+    ];
+
 
 var server = app.listen(app.get('port'), function() {
   debug('Express server li-stening on port ' + server.address().port);
@@ -17,10 +30,10 @@ if (!app.settings.socketIO){
 io.on('connection',function(socket){
   console.log('Connection');
   socket.on('newItem', function(data){
-    WSCreate(data.ItemNo, data.EntityName, function(newData){
+    WSCreate(data.ItemNo, data.EntityName, WSHostName, WSPathName, function(newData){
     console.log('Working on Item : ',data.ItemNo);
       socket.emit('Item : Working',data.ItemNo);
-      WSSave(data.ItemNo,newData.entityName,newData.eObject,data.Object, function(newData2){
+      WSSave(data.ItemNo,newData.entityName,newData.eObject,data.Object, WSHostName, WSPathName, function(newData2){
         socket.emit('Item : Done',newData2.itemNo);
       });
     });
@@ -30,5 +43,18 @@ io.on('connection',function(socket){
   });
   socket.on('Item : Created', function(data){
     console.log('Item was created ',data);
+  });
+  socket.on('server : Changed', function(data) {
+    app.set('server', data);
+    for(var i in serverList){
+      if (serverList[i].label == app.get('server')){
+        WSHostName = serverList[i].WSHostName;
+        WSPathName = serverList[i].WSPathName;
+        break;
+      }
+    }
+    console.log('Server Changed ', app.get('server'));
+    console.log('Host Name = ', WSHostName);
+    console.log('Path Name = ', WSPathName);
   });
 });

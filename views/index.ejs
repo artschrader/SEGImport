@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
-<script type="text/javascript" src="http://shopas.seg.org/js/jquery.js"></script>
-<script type="text/javascript" src="http://shopas.seg.org/js/jquery-ui.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/jquery-1.10.2.js"></script>
+<script type="text/javascript" src="http://code.jquery.com/ui/1.11.2/jquery-ui.js"></script>
 <script type="text/javascript" src="/socket.io/socket.io.js"></script>
 <script>
     var socket = io();
@@ -9,10 +9,27 @@
   <head>
     <title><%= title %></title>
     <link rel='stylesheet' href='/stylesheets/style.css' />
+      <link rel="stylesheet" href="//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css">
   </head>
   <body>
     <h1><%= title %></h1>
-    <p>Welcome to <%= title %></p>
+    <label for="server">Select a target server:</label>
+    <select name="server" id="server">
+        <option value="local">Localhost</option>
+        <option value="psupp">psupp</option>
+        <option value="pdev1">pdev1</option>
+        <option value="pdev2">pdev2</option>
+        <option value="pdev3">pdev3</option>
+        <option value="ptst">ptst</option>
+        <option value="pprod">pprod</option>
+    </select>
+    <script>
+        $("#server").selectmenu({
+            change: function(event, data) {
+                socket.emit("server : Changed", data.item.value);
+            }
+        });
+    </script>
     <div id="drop">Drop an XLSX file here to see sheet data.</div>
       <pre id="out">Entity Name:&nbsp;</pre>
       <br />
